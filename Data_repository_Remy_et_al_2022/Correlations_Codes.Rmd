@@ -1,0 +1,319 @@
+---
+title: "Correlations"
+author: "Cecile C. Remy"
+date: "April 2, 2022"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+These codes produce the results of figure 5 and figure S4.
+The files used are located in the folder named "Correlations" and contain the data (charcoal measurements, fire histories, pollen percentages, PAR, and mean July temperature) based on the outputs created to produce the figures and results for each site (Rosalia_corr.txt, Rosalia_corr_charcoal.txt, and Pikku_corr.txt, Pikku_charcoal.txt). 
+
+```{r}
+#install.packages("ggplot2") #if not already installed
+library("ggplot2")
+windowsFonts(Times=windowsFont("Times New Roman"))
+#install.packages("ggridges") #if not already installed
+library(ggridges)
+#install.packages("reshape2") #if not already installed
+library(reshape2)
+#install.packages("viridis") #if not already installed
+library(viridis)
+#install.packages("gridExtra") #if not already installed
+library(gridExtra)
+```
+
+```{r}
+dirs<-c('Correlations/')
+Files<-list.files(dirs)
+
+Pikku_charcoal<-read.table("Correlations/Pikku_corr_charcoal.txt",head=T,sep=" ")
+Rosalia_charcoal<-read.table("Correlations/Rosalia_corr_charcoal.txt",head=T,sep=" ")
+Pikku_Fire<-read.table("Correlations/Pikku_corr.txt",head=T,sep=" ")
+Rosalia_Fire<-read.table("Correlations/Rosalia_corr.txt",head=T,sep=" ")
+```
+##Rosalia
+```{r}
+           
+BB<-data.frame()
+FF<-data.frame()
+FS<-data.frame()
+TJ<-data.frame()
+for (u in 1:999){  #number of iterations
+COL_BB<-c(6:18)
+COL_FF<-c(6:18)
+COL_FS<-c(6:18)
+COL_TJ<-c(6:18)
+x<-Rosalia_charcoal[sample(nrow(Rosalia_charcoal), 110), ]
+for (i in 1:13){
+BB_x<-cor.test(x[,COL_BB[i]],x[,2], method = c("pearson"))$estimate[[1]]
+FF_x<-cor.test(x[,COL_FF[i]],x[,3], method = c("pearson"))$estimate[[1]]
+FS_x<-cor.test(x[,COL_FS[i]],x[,4], method = c("pearson"))$estimate[[1]]
+TJ_x<-cor.test(x[,COL_TJ[i]],x[,5], method = c("pearson"))$estimate[[1]]
+
+BB[u,i]<-BB_x
+FF[u,i]<-FF_x
+FS[u,i]<-FS_x
+TJ[u,i]<-TJ_x
+}
+}
+
+colnames(BB)<-c("Pinus","Picea","Betula","Alnus","Juniperus","Salix","Ericaceae","Poaceae","Artemisia","Cyperaceae","Sphagnum","PAR","ROC")
+colnames(FF)<-c("Pinus","Picea","Betula","Alnus","Juniperus","Salix","Ericaceae","Poaceae","Artemisia","Cyperaceae","Sphagnum","PAR","ROC")
+colnames(FS)<-c("Pinus","Picea","Betula","Alnus","Juniperus","Salix","Ericaceae","Poaceae","Artemisia","Cyperaceae","Sphagnum","PAR","ROC")  
+colnames(TJ)<-c("Pinus","Picea","Betula","Alnus","Juniperus","Salix","Ericaceae","Poaceae","Artemisia","Cyperaceae","Sphagnum","PAR","ROC")
+BB[is.na(BB)] <- 0
+FF[is.na(FF)] <- 0
+FS[is.na(FS)] <- 0
+TJ[is.na(TJ)] <- 0
+
+LW<-data.frame()
+for (u in 1:999){  #number of iterations
+COL_LW<-c(2:5,8:20)
+x<-Rosalia_Fire[sample(nrow(Rosalia_Fire), 84), ]
+for (i in 1:17){
+LW_x<-cor.test(x[,COL_LW[i]],x[,6], method = c("pearson"))$estimate[[1]]
+LW[u,i]<-LW_x
+}
+}
+  
+colnames(LW)<-c("Biomass burned","Fire frequency","Fire size","July temperature","Pinus","Picea","Betula","Alnus","Juniperus","Salix","Ericaceae","Poaceae","Artemisia","Cyperaceae","Sphagnum","PAR","ROC")
+
+LW[is.na(LW)] <- 0
+
+BB_plot<-t(BB)
+BB_plot<-data.frame(rownames(BB_plot),BB_plot)
+BB_plot<-melt(BB_plot,by="rownames.BB_plot.")
+colnames(BB_plot)[1]<-'Species'
+BB_plot$Species<-factor(BB_plot$Species,levels=rev(colnames(BB)))
+
+FF_plot<-t(FF)
+FF_plot<-data.frame(rownames(FF_plot),FF_plot)
+FF_plot<-melt(FF_plot,by="rownames.FF_plot.")
+colnames(FF_plot)[1]<-'Species'
+FF_plot$Species<-factor(FF_plot$Species,levels=rev(colnames(FF)))
+
+FS_plot<-t(FS)
+FS_plot<-data.frame(rownames(FS_plot),FS_plot)
+FS_plot<-melt(FS_plot,by="rownames.FS_plot.")
+colnames(FS_plot)[1]<-'Species'
+FS_plot$Species<-factor(FS_plot$Species,levels=rev(colnames(FS)))
+
+LW_plot<-t(LW)
+LW_plot<-data.frame(rownames(LW_plot),LW_plot)
+LW_plot<-melt(LW_plot,by="rownames.LW_plot.")
+colnames(LW_plot)[1]<-'Species'
+LW_plot$Species<-factor(LW_plot$Species,levels=rev(colnames(LW)))
+
+TJ_plot<-t(TJ)
+TJ_plot<-data.frame(rownames(TJ_plot),TJ_plot)
+TJ_plot<-melt(TJ_plot,by="rownames.TJ_plot.")
+colnames(TJ_plot)[1]<-'Species'
+TJ_plot$Species<-factor(TJ_plot$Species,levels=rev(colnames(TJ)))
+
+RosBB_plot<-BB_plot
+RosFF_plot<-FF_plot
+RosFS_plot<-FS_plot
+RosLW_plot<-LW_plot
+RosTJ_plot<-TJ_plot
+```
+
+```{r}
+#Pikku         
+BB<-data.frame()
+FF<-data.frame()
+FS<-data.frame()
+TJ<-data.frame()
+for (u in 1:999){  #number of iterations
+COL_BB<-c(6:18)
+COL_FF<-c(6:18)
+COL_FS<-c(6:18)
+COL_TJ<-c(6:18)
+x<-Pikku_charcoal[sample(nrow(Pikku_charcoal), 108), ]
+for (i in 1:13){
+BB_x<-cor.test(x[,COL_BB[i]],x[,2], method = c("pearson"))$estimate[[1]]
+FF_x<-cor.test(x[,COL_FF[i]],x[,3], method = c("pearson"))$estimate[[1]]
+FS_x<-cor.test(x[,COL_FS[i]],x[,4], method = c("pearson"))$estimate[[1]]
+TJ_x<-cor.test(x[,COL_TJ[i]],x[,5], method = c("pearson"))$estimate[[1]]
+
+BB[u,i]<-BB_x
+FF[u,i]<-FF_x
+FS[u,i]<-FS_x
+TJ[u,i]<-TJ_x
+}
+}
+
+colnames(BB)<-c("Pinus","Picea","Betula","Alnus","Juniperus","Salix","Ericaceae","Poaceae","Artemisia","Cyperaceae","Sphagnum","PAR","ROC")
+colnames(FF)<-c("Pinus","Picea","Betula","Alnus","Juniperus","Salix","Ericaceae","Poaceae","Artemisia","Cyperaceae","Sphagnum","PAR","ROC")
+colnames(FS)<-c("Pinus","Picea","Betula","Alnus","Juniperus","Salix","Ericaceae","Poaceae","Artemisia","Cyperaceae","Sphagnum","PAR","ROC")  
+colnames(TJ)<-c("Pinus","Picea","Betula","Alnus","Juniperus","Salix","Ericaceae","Poaceae","Artemisia","Cyperaceae","Sphagnum","PAR","ROC")
+BB[is.na(BB)] <- 0
+FF[is.na(FF)] <- 0
+FS[is.na(FS)] <- 0
+TJ[is.na(TJ)] <- 0
+
+LW<-data.frame()
+for (u in 1:999){  #number of iterations
+COL_LW<-c(2:5,8:20)
+x<-Pikku_Fire[sample(nrow(Pikku_Fire), 92), ]
+for (i in 1:17){
+LW_x<-cor.test(x[,COL_LW[i]],x[,6], method = c("pearson"))$estimate[[1]]
+LW[u,i]<-LW_x
+}
+}
+  
+colnames(LW)<-c("Biomass burned","Fire frequency","Fire size","July temperature","Pinus","Picea","Betula","Alnus","Juniperus","Salix","Ericaceae","Poaceae","Artemisia","Cyperaceae","Sphagnum","PAR","ROC")
+
+LW[is.na(LW)] <- 0
+
+BB_plot<-t(BB)
+BB_plot<-data.frame(rownames(BB_plot),BB_plot)
+BB_plot<-melt(BB_plot,by="rownames.BB_plot.")
+colnames(BB_plot)[1]<-'Species'
+BB_plot$Species<-factor(BB_plot$Species,levels=rev(colnames(BB)))
+
+FF_plot<-t(FF)
+FF_plot<-data.frame(rownames(FF_plot),FF_plot)
+FF_plot<-melt(FF_plot,by="rownames.FF_plot.")
+colnames(FF_plot)[1]<-'Species'
+FF_plot$Species<-factor(FF_plot$Species,levels=rev(colnames(FF)))
+
+FS_plot<-t(FS)
+FS_plot<-data.frame(rownames(FS_plot),FS_plot)
+FS_plot<-melt(FS_plot,by="rownames.FS_plot.")
+colnames(FS_plot)[1]<-'Species'
+FS_plot$Species<-factor(FS_plot$Species,levels=rev(colnames(FS)))
+
+LW_plot<-t(LW)
+LW_plot<-data.frame(rownames(LW_plot),LW_plot)
+LW_plot<-melt(LW_plot,by="rownames.LW_plot.")
+colnames(LW_plot)[1]<-'Species'
+LW_plot$Species<-factor(LW_plot$Species,levels=rev(colnames(LW)))
+
+TJ_plot<-t(TJ)
+TJ_plot<-data.frame(rownames(TJ_plot),TJ_plot)
+TJ_plot<-melt(TJ_plot,by="rownames.TJ_plot.")
+colnames(TJ_plot)[1]<-'Species'
+TJ_plot$Species<-factor(TJ_plot$Species,levels=rev(colnames(TJ)))
+
+PikBB_plot<-BB_plot
+PikFF_plot<-FF_plot
+PikFS_plot<-FS_plot
+PikLW_plot<-LW_plot
+PikTJ_plot<-TJ_plot
+```
+##Graphs
+```{r,fig.width=5,fig.height=10}
+RosBB_plot<-cbind(rep(1,nrow(RosBB_plot)),RosBB_plot)
+colnames(RosBB_plot)[1]<-"Site"
+RosFF_plot<-cbind(rep(1,nrow(RosFF_plot)),RosFF_plot)
+colnames(RosFF_plot)[1]<-"Site"
+RosFS_plot<-cbind(rep(1,nrow(RosFS_plot)),RosFS_plot)
+colnames(RosFS_plot)[1]<-"Site"
+RosLW_plot<-cbind(rep(1,nrow(RosLW_plot)),RosLW_plot)
+colnames(RosLW_plot)[1]<-"Site"
+RosTJ_plot<-cbind(rep(1,nrow(RosTJ_plot)),RosTJ_plot)
+colnames(RosTJ_plot)[1]<-"Site"
+
+PikBB_plot<-cbind(rep(2,nrow(PikBB_plot)),PikBB_plot)
+colnames(PikBB_plot)[1]<-"Site"
+PikFF_plot<-cbind(rep(2,nrow(PikFF_plot)),PikFF_plot)
+colnames(PikFF_plot)[1]<-"Site"
+PikFS_plot<-cbind(rep(2,nrow(PikFS_plot)),PikFS_plot)
+colnames(PikFS_plot)[1]<-"Site"
+PikLW_plot<-cbind(rep(2,nrow(PikLW_plot)),PikLW_plot)
+colnames(PikLW_plot)[1]<-"Site"
+PikTJ_plot<-cbind(rep(2,nrow(PikTJ_plot)),PikTJ_plot)
+colnames(PikTJ_plot)[1]<-"Site"
+
+ComBB<-rbind(RosBB_plot,PikBB_plot)
+ComBB$Site<-factor(ComBB$Site,labels=c("Rosalia","Pikku"))
+ComFF<-rbind(RosFF_plot,PikFF_plot)
+ComFF$Site<-factor(ComFF$Site,labels=c("Rosalia","Pikku"))
+ComFS<-rbind(RosFS_plot,PikFS_plot)
+ComFS$Site<-factor(ComFS$Site,labels=c("Rosalia","Pikku"))
+ComLW<-rbind(RosLW_plot,PikLW_plot)
+ComLW$Site<-factor(ComLW$Site,labels=c("Rosalia","Pikku"))
+ComTJ<-rbind(RosTJ_plot,PikTJ_plot)
+ComTJ$Site<-factor(ComTJ$Site,labels=c("Rosalia","Pikku"))
+
+cols <-  alpha(c("Rosalia" = "gold3", "Pikku" = "lightseagreen"),0.4)
+
+BB_p<-    
+ggplot(ComBB,aes(x=value,y=Species,fill=Site))+
+   theme_minimal()+
+   geom_density_ridges_gradient(scale = 1, size = 0.3, rel_min_height = 0.01)+
+   scale_fill_manual(values=cols)+
+   scale_x_continuous(limits=c(-1,1))+
+   geom_vline(xintercept = 0,linetype="dotted")+
+   labs(title="Biomass burned")+
+   theme(text=element_text(family="Times"),
+   axis.title.y=element_blank(),
+   axis.title.x=element_blank(),
+   axis.text.y=element_text(face="italic"),
+   axis.text.x=element_text())
+BB_p
+   
+FF_p<-    
+ggplot(ComFF,aes(x=value,y=Species,fill=Site))+
+   theme_minimal()+
+   geom_density_ridges_gradient(scale = 1, size = 0.3, rel_min_height = 0.01)+
+   scale_fill_manual(values=cols)+
+   scale_x_continuous(limits=c(-1,1))+
+   geom_vline(xintercept = 0,linetype="dotted")+
+   labs(title="Fire frequency")+
+   theme(text=element_text(family="Times"),
+   axis.title.y=element_blank(),
+   axis.title.x=element_blank(),
+   axis.text.y=element_text(face="italic"),
+   axis.text.x=element_text())
+FF_p
+         
+FS_p<-    
+ggplot(ComFS,aes(x=value,y=Species,fill=Site))+
+   theme_minimal()+
+   geom_density_ridges_gradient(scale = 1, size = 0.3, rel_min_height = 0.01)+
+   scale_fill_manual(values=cols)+
+   scale_x_continuous(limits=c(-1,1))+
+   geom_vline(xintercept = 0,linetype="dotted")+
+   labs(title="Fire size")+
+   theme(text=element_text(family="Times"),
+   axis.title.y=element_blank(),
+   axis.title.x=element_blank(),
+   axis.text.y=element_text(face="italic"),
+   axis.text.x=element_text())
+FS_p
+
+TJ_p<-    
+ggplot(ComTJ,aes(x=value,y=Species,fill=Site))+
+   theme_minimal()+
+   geom_density_ridges_gradient(scale = 1, size = 0.3, rel_min_height = 0.01)+
+   scale_fill_manual(values=cols)+
+   scale_x_continuous(limits=c(-1,1))+
+   geom_vline(xintercept = 0,linetype="dotted")+
+   labs(title="July temperature")+
+   theme(text=element_text(family="Times"),
+   axis.title.y=element_blank(),
+   axis.title.x=element_blank(),
+   axis.text.y=element_text(face="italic"),
+   axis.text.x=element_text())
+TJ_p
+
+LW_p<-    
+ggplot(ComLW,aes(x=value,y=Species,fill=Site))+
+   theme_minimal()+
+   geom_density_ridges_gradient(scale = 1, size = 0.3, rel_min_height = 0.01)+
+   scale_fill_manual(values=cols)+
+   scale_x_continuous(limits=c(-1,1))+
+   geom_vline(xintercept = 0,linetype="dotted")+
+   labs(title="Portion of charcoal with wood aspect")+
+   theme(text=element_text(family="Times"),
+   axis.title.y=element_blank(),
+   axis.title.x=element_blank(),
+   axis.text.y=element_text(face="italic"),
+   axis.text.x=element_text())
+LW_p
+         
+
+```

@@ -1,0 +1,475 @@
+---
+title: "Vegetation"
+author: "Cecile C. Remy"
+date: "April 2, 2022"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+These codes produce the results of figure 3.
+The files used are located in the folder named "Vegetation_histories" and contain the pollen data in percentage  (named Rosalia_percent.csv and Pikku_percent.csv), in count (named Rosalia_count.csv and Pikku_count.csv) and in accumulation rates (Rosalia_accumRate.csv and Pikku_accumRate.csv) with the corresponding ages from the age-depth models.
+
+```{r }
+#install.packages("ggplot2") #if not already installed
+library("ggplot2")
+#install.packages("reshape2") #if not already installed
+library("reshape2")
+#install.packages("vegan") #if not already installed
+library("vegan")
+#install.packages("rioja") #if not already installed
+library("rioja")
+#install.packages("RRatepol") #if not already installed
+library(RRatepol)
+#install.packages("cowplot") #if not already installed
+library("cowplot")
+windowsFonts(Times=windowsFont("Times New Roman"))
+```
+
+## **Diagrams**
+```{r}
+dirs<-c('Vegetation_histories/')
+Files<-list.files(dirs)
+```
+# *Rosalia*
+```{r,fig.width=10,fig.height=11}
+Rosalia_perc <- read.csv("Vegetation_histories/Rosalia_percent.csv", header=TRUE, row.names=1, sep=";", check.names=FALSE)
+Rosalia_perc1 <- Rosalia_perc[,c(2:38,40)]
+
+# Remove pollen types where total abundance is less than 1%
+ma.sum <- colSums(Rosalia_perc1)
+Rosalia_perc2 <- Rosalia_perc1[, which(ma.sum > 1)]
+
+
+#CONISS analyses
+Rosalia.dist <- vegdist(Rosalia_perc2, method="bray", binary=FALSE, diag=FALSE, upper=FALSE, na.rm = FALSE)
+Rosalia.chclust <- chclust(Rosalia.dist, method="coniss") 
+bstick(Rosalia.chclust, 10)
+
+y.scale <- Rosalia_perc[,1]
+ex <- c(rep(TRUE, times=ncol(Rosalia_perc2)))
+p.col <- c(rep("forestgreen", times=9), rep("gold2", times=10))
+pol.plot <- strat.plot(Rosalia_perc2, yvar=y.scale, y.tks=seq(0,11100,500), y.rev=TRUE, plot.line=FALSE, plot.poly=TRUE,plot.bar=TRUE, col.bar="black", col.poly=p.col, col.poly.line="black", scale.percent=TRUE,scale.minmax=TRUE,xSpace=0.01, x.pc.inc=10,x.pc.lab=TRUE, x.pc.omit0=TRUE, las=2, exag=ex, col.exag="auto", exag.alpha=0.50, exag.mult=5,title="Rosalia (in %) ",clust=Rosalia.chclust)
+addClustZone(pol.plot, Rosalia.chclust, nZone=4, lwd=1.5, lty=2, col="grey25")
+
+#Plots
+Rosalia_perc2 <- cbind(Rosalia_perc[,1],Rosalia_perc2)
+colnames(Rosalia_perc2)[1] <- "Age"
+
+Ros_Pinus<-Rosalia_perc2[,c(1,2)]
+Ros_Pinus<- melt(Ros_Pinus, id='Age')
+Ros_Picea<-Rosalia_perc2[,c(1,3)]
+Ros_Picea<- melt(Ros_Picea, id='Age')
+Ros_Betula<-Rosalia_perc2[,c(1,4)]
+Ros_Betula<- melt(Ros_Betula, id='Age')
+Ros_Alnus<-Rosalia_perc2[,c(1,5)]
+Ros_Alnus<- melt(Ros_Alnus, id='Age')
+Ros_Junip<-Rosalia_perc2[,c(1,6)]
+Ros_Junip<- melt(Ros_Junip, id='Age')
+Ros_Salix<-Rosalia_perc2[,c(1,8)]
+Ros_Salix<- melt(Ros_Salix, id='Age')
+Ros_Erica<-Rosalia_perc2[,c(1,9)]
+Ros_Erica<- melt(Ros_Erica, id='Age')
+Ros_Poace<-Rosalia_perc2[,c(1,11)]
+Ros_Poace<- melt(Ros_Poace, id='Age')
+Ros_Artem<-Rosalia_perc2[,c(1,14)]
+Ros_Artem<- melt(Ros_Artem, id='Age')
+Ros_Cypera<-Rosalia_perc2[,c(1,20)]
+Ros_Cypera<- melt(Ros_Cypera, id='Age')
+Ros_Sphagn<-Rosalia_perc2[,c(1,21)]
+Ros_Sphagn<- melt(Ros_Sphagn, id='Age')
+
+Pinus<-    
+ggplot(Ros_Pinus, aes(x=Age, y=value, fill=variable)) +
+    theme_classic()+                 
+    geom_area()+
+    scale_fill_manual(values=c("darkolivegreen4"))+ 
+    scale_x_reverse(breaks =seq(0,100000,1000))+
+    labs(x ="Age (yrs cal BP)", y = "%")+
+   theme(axis.text.x = element_blank(),axis.title.x =element_blank(),
+   axis.title.y =element_blank(),text=element_text(family="Times",size=8))
+   
+Picea<-    
+ggplot(Ros_Picea, aes(x=Age, y=value, fill=variable)) +
+    theme_classic()+                 
+    geom_area()+
+    scale_fill_manual(values=c("mediumseagreen"))+ 
+    scale_x_reverse(breaks =seq(0,100000,1000))+
+    labs(x ="Age (yrs cal BP)", y = "%")+
+   theme(axis.text.x = element_blank(),axis.title.x =element_blank(),
+   axis.title.y =element_blank(),text=element_text(family="Times",size=8))
+   
+Betula<-    
+ggplot(Ros_Betula, aes(x=Age, y=value, fill=variable)) +
+    theme_classic()+                 
+    geom_area()+
+    scale_fill_manual(values=c("lightgreen"))+ 
+    scale_x_reverse(breaks =seq(0,100000,1000))+
+    labs(x ="Age (yrs cal BP)", y = "%")+
+   theme(axis.text.x = element_blank(),axis.title.x =element_blank(),
+   axis.title.y =element_blank(),text=element_text(family="Times",size=8))
+    
+Alnus<-    
+ggplot(Ros_Alnus, aes(x=Age, y=value, fill=variable)) +
+    theme_classic()+                  
+    geom_area()+
+    scale_fill_manual(values=c("#894889"))+ 
+    scale_x_reverse(breaks =seq(0,100000,1000))+
+    labs(x ="Age (yrs cal BP)", y = "%")+
+   theme(axis.text.x = element_blank(),axis.title.x =element_blank(),
+   axis.title.y =element_blank(),text=element_text(family="Times",size=8))
+   
+Junip<-    
+ggplot(Ros_Junip, aes(x=Age, y=value, fill=variable)) +
+    theme_classic()+                  
+    geom_area()+
+    scale_fill_manual(values=c("#894889"))+ 
+    scale_x_reverse(breaks =seq(0,100000,1000))+
+    labs(x ="Age (yrs cal BP)", y = "%")+
+   theme(axis.text.x = element_blank(),axis.title.x =element_blank(),
+   axis.title.y =element_blank(),text=element_text(family="Times",size=8))
+   
+Salix<-    
+ggplot(Ros_Salix, aes(x=Age, y=value, fill=variable)) +
+    theme_classic()+                  
+    geom_area()+
+    scale_fill_manual(values=c("#894889"))+ 
+    scale_x_reverse(breaks =seq(0,100000,1000))+
+    labs(x ="Age (yrs cal BP)", y = "%")+
+   theme(axis.text.x = element_blank(),axis.title.x =element_blank(),
+   axis.title.y =element_blank(),text=element_text(family="Times",size=8))
+   
+Erica<-    
+ggplot(Ros_Erica, aes(x=Age, y=value, fill=variable)) +
+    theme_classic()+                  
+    geom_area()+
+    scale_fill_manual(values=c("#894889"))+ 
+    scale_x_reverse(breaks =seq(0,100000,1000))+
+    labs(x ="Age (yrs cal BP)", y = "%")+
+   theme(axis.text.x = element_blank(),axis.title.x =element_blank(),
+   axis.title.y =element_blank(),text=element_text(family="Times",size=8))
+
+Poace<-    
+ggplot(Ros_Poace, aes(x=Age, y=value, fill=variable)) +
+    theme_classic()+                 
+    geom_area()+
+    scale_fill_manual(values=c("#fda642"))+ 
+    scale_x_reverse(breaks =seq(0,100000,1000))+
+    labs(x ="Age (yrs cal BP)", y = "%")+
+   theme(axis.text.x = element_blank(),axis.title.x =element_blank(),
+   axis.title.y =element_blank(),text=element_text(family="Times",size=8)) 
+   
+Artem<-    
+ggplot(Ros_Artem, aes(x=Age, y=value, fill=variable)) +
+    theme_classic()+                 
+    geom_area()+
+    scale_fill_manual(values=c("#fda642"))+ 
+    scale_x_reverse(breaks =seq(0,100000,1000))+
+    labs(x ="Age (yrs cal BP)", y = "%")+
+   theme(axis.text.x = element_blank(),axis.title.x =element_blank(),
+   axis.title.y =element_blank(),text=element_text(family="Times",size=8)) 
+   
+Cypera<-    
+ggplot(Ros_Cypera, aes(x=Age, y=value, fill=variable)) +
+    theme_classic()+                 
+    geom_area()+
+    scale_fill_manual(values=c("#fda642"))+ 
+    scale_x_reverse(breaks =seq(0,100000,1000))+
+    labs(x ="Age (yrs cal BP)", y = "%")+
+   theme(axis.text.x = element_blank(),axis.title.x =element_blank(),
+   axis.title.y =element_blank(),text=element_text(family="Times",size=8)) 
+   
+Sphagn<-
+ggplot(Ros_Sphagn, aes(x=Age, y=value, fill=variable)) +
+    theme_classic()+                 
+    geom_area()+
+    scale_fill_manual(values=c("#6699ff"))+ 
+    scale_x_reverse(breaks =seq(0,100000,1000))+
+    labs(x ="Age (yrs cal BP)", y = "%")+
+   theme(axis.text.x = element_blank(),axis.title.x =element_blank(),
+   axis.title.y =element_blank(),text=element_text(family="Times",size=8)) 
+
+Rosalia_RoC<-read.csv("Vegetation_histories/Rosalia_count.csv", header=TRUE, sep=";")
+Rosalia_RoC$sample.id<-as.character(Rosalia_RoC$sample.id)
+sequence_Ros <- 
+  fc_estimate_RoC(
+    data_source_community = Rosalia_RoC[,-c(2:3)],
+    data_source_age = Rosalia_RoC[,c(1:3)],
+    age_uncertainty = FALSE,
+    smooth_method = "age.w",
+    Working_Units = "levels",
+    tranform_to_proportions = TRUE,
+    rand = 1000,
+    treads = TRUE,
+    DC = "chisq")
+Rosalia_RoC<-data.frame(sequence_Ros)
+
+ROC_plot<-
+ggplot(Rosalia_RoC,aes(x=Age,y=ROC))+
+   theme_classic()+
+   scale_x_reverse(breaks =seq(0,100000,1000),limits=c(max(Ros_Sphagn$Age),min(Ros_Sphagn$Age)))+
+   scale_y_continuous(limits=c(0,0.4))+
+   geom_area()+
+   labs(tx="Age (yrs cal BP)",y="ROC") +
+   theme(axis.text.x = element_blank(),axis.title.x =element_blank(),
+   axis.title.y =element_blank(),text=element_text(family="Times",size=8)) 
+
+Rosalia_AccRate<-read.csv("Vegetation_histories/Rosalia_accumRate.csv",header=TRUE, row.names=1, sep=";", check.names=FALSE)
+Ros_Tree<-Rosalia_AccRate[,c(1:5)]
+Ros_Tree<-cbind(Ros_Tree[,1],apply(Ros_Tree[,c(2:5)],1,sum))
+colnames(Ros_Tree)<-c("Age","Tree") 
+Ros_Tree<-as.data.frame(Ros_Tree) 
+
+AccRate_plot<-
+ggplot(Ros_Tree,aes(x=Age,y=Tree))+
+   theme_classic()+
+   scale_x_reverse(breaks =seq(0,100000,1000),limits=c(max(Ros_Sphagn$Age),min(Ros_Sphagn$Age)))+
+   geom_area()+
+   labs(tx="Age (yrs cal BP)",y="PAR") +
+   theme(axis.text.x = element_blank(),axis.title.x =element_blank(),
+   axis.title.y =element_blank(),text=element_text(family="Times",size=8)) 
+
+
+prow <- plot_grid(Betula + theme(legend.position="none"),
+                  Pinus + theme(legend.position="none"),
+                  Picea + theme(legend.position="none"),
+                  Alnus + theme(legend.position="none"),
+                  Erica + theme(legend.position="none"),
+                  Junip + theme(legend.position="none"),
+                  Salix + theme(legend.position="none"),
+                  Poace + theme(legend.position="none"),
+                  Cypera + theme(legend.position="none"),
+                  Artem + theme(legend.position="none"),
+                  Sphagn + theme(legend.position="none"),
+                  ROC_plot + theme(legend.position="none"),
+                  AccRate_plot + theme(legend.position="none"),    
+           align = 'v',
+           labels = c("Betula","Pinus","Picea","Alnus","Erica","Junip","Salix","Poace","Cypera","Artem","Sphagn","RoC","PAR"),
+           hjust = -1,
+           nrow = 13,
+           label_size = 13)  
+
+Rosalia_diagram <- plot_grid( prow, rel_widths = c(3, .3))
+Rosalia_diagram      
+```
+
+# *Pikku*
+```{r,fig.width=10,fig.height=11}
+Pikku_perc <- read.csv("Vegetation_histories/Pikku_percent.csv", header=TRUE, row.names=1, sep=";", check.names=FALSE)
+Pikku_perc1 <- Pikku_perc[,c(2:39)]
+
+# Remove pollen types where total abundanace is less than 1%
+ma.sum <- colSums(Pikku_perc1)
+Pikku_perc2 <- Pikku_perc1[, which(ma.sum > 1)]
+
+#CONISS analyses
+Pikku.dist <- vegdist(Pikku_perc2, method="bray", binary=FALSE, diag=FALSE, upper=FALSE, na.rm = FALSE)
+Pikku.chclust <- chclust(Pikku.dist, method="coniss") 
+bstick(Pikku.chclust, 10)
+
+y.scale <- Pikku_perc[,1]
+ex <- c(rep(TRUE, times=ncol(Pikku_perc2)))
+p.col <- c(rep("forestgreen", times=9), rep("gold2", times=10))
+pol.plot <- strat.plot(Pikku_perc2, yvar=y.scale, y.tks=seq(0,11100,500), y.rev=TRUE, plot.line=FALSE, plot.poly=TRUE,plot.bar=TRUE, col.bar="black", col.poly=p.col, col.poly.line="black", scale.percent=TRUE,scale.minmax=TRUE,xSpace=0.01, x.pc.inc=10,x.pc.lab=TRUE, x.pc.omit0=TRUE, las=2, exag=ex, col.exag="auto", exag.alpha=0.50, exag.mult=5,title="Rosalia (in %) ",clust=Pikku.chclust)
+addClustZone(pol.plot, Pikku.chclust, nZone=6, lwd=1.5, lty=2, col="grey25")
+
+#Plots
+Pikku_perc2 <- cbind(Pikku_perc[,1],Pikku_perc2)
+colnames(Pikku_perc2)[1] <- "Age"
+
+Pik_Pinus<-Pikku_perc2[,c(1,2)]
+Pik_Pinus<- melt(Pik_Pinus, id='Age')
+Pik_Picea<-Pikku_perc2[,c(1,3)]
+Pik_Picea<- melt(Pik_Picea, id='Age')
+Pik_Betula<-Pikku_perc2[,c(1,4)]
+Pik_Betula<- melt(Pik_Betula, id='Age')
+Pik_Alnus<-Pikku_perc2[,c(1,5)]
+Pik_Alnus<- melt(Pik_Alnus, id='Age')
+Pik_Junip<-Pikku_perc2[,c(1,6)]
+Pik_Junip<- melt(Pik_Junip, id='Age')
+Pik_Salix<-Pikku_perc2[,c(1,10)]
+Pik_Salix<- melt(Pik_Salix, id='Age')
+Pik_Erica<-Pikku_perc2[,c(1,11)]
+Pik_Erica<- melt(Pik_Erica, id='Age')
+Pik_Poace<-Pikku_perc2[,c(1,15)]
+Pik_Poace<- melt(Pik_Poace, id='Age')
+Pik_Artem<-Pikku_perc2[,c(1,18)]
+Pik_Artem<- melt(Pik_Artem, id='Age')
+Pik_Cypera<-Pikku_perc2[,c(1,24)]
+Pik_Cypera<- melt(Pik_Cypera, id='Age')
+Pik_Sphagn<-Pikku_perc2[,c(1,26)]
+Pik_Sphagn<- melt(Pik_Sphagn, id='Age')
+
+Pinus<-    
+ggplot(Pik_Pinus, aes(x=Age, y=value, fill=variable)) +
+    theme_classic()+                 
+    geom_area()+
+    scale_fill_manual(values=c("darkolivegreen4"))+ 
+    scale_x_reverse(breaks =seq(0,100000,1000))+
+    labs(x ="Age (yrs cal BP)", y = "%")+
+   theme(axis.text.x = element_blank(),axis.title.x =element_blank(),
+   axis.title.y =element_blank(),text=element_text(family="Times",size=8))
+   
+Picea<-    
+ggplot(Pik_Picea, aes(x=Age, y=value, fill=variable)) +
+    theme_classic()+                 
+    geom_area()+
+    scale_fill_manual(values=c("mediumseagreen"))+ 
+    scale_x_reverse(breaks =seq(0,100000,1000))+
+    labs(x ="Age (yrs cal BP)", y = "%")+
+   theme(axis.text.x = element_blank(),axis.title.x =element_blank(),
+   axis.title.y =element_blank(),text=element_text(family="Times",size=8))
+   
+Betula<-    
+ggplot(Pik_Betula, aes(x=Age, y=value, fill=variable)) +
+    theme_classic()+                 
+    geom_area()+
+    scale_fill_manual(values=c("lightgreen"))+ 
+    scale_x_reverse(breaks =seq(0,100000,1000))+
+    labs(x ="Age (yrs cal BP)", y = "%")+
+   theme(axis.text.x = element_blank(),axis.title.x =element_blank(),
+   axis.title.y =element_blank(),text=element_text(family="Times",size=8))
+    
+Alnus<-    
+ggplot(Pik_Alnus, aes(x=Age, y=value, fill=variable)) +
+    theme_classic()+                  
+    geom_area()+
+    scale_fill_manual(values=c("#894889"))+ 
+    scale_x_reverse(breaks =seq(0,100000,1000))+
+    labs(x ="Age (yrs cal BP)", y = "%")+
+   theme(axis.text.x = element_blank(),axis.title.x =element_blank(),
+   axis.title.y =element_blank(),text=element_text(family="Times",size=8))
+   
+Junip<-    
+ggplot(Pik_Junip, aes(x=Age, y=value, fill=variable)) +
+    theme_classic()+                  
+    geom_area()+
+    scale_fill_manual(values=c("#894889"))+ 
+    scale_x_reverse(breaks =seq(0,100000,1000))+
+    labs(x ="Age (yrs cal BP)", y = "%")+
+   theme(axis.text.x = element_blank(),axis.title.x =element_blank(),
+   axis.title.y =element_blank(),text=element_text(family="Times",size=8))
+   
+Salix<-    
+ggplot(Pik_Salix, aes(x=Age, y=value, fill=variable)) +
+    theme_classic()+                  
+    geom_area()+
+    scale_fill_manual(values=c("#894889"))+ 
+    scale_x_reverse(breaks =seq(0,100000,1000))+
+    labs(x ="Age (yrs cal BP)", y = "%")+
+   theme(axis.text.x = element_blank(),axis.title.x =element_blank(),
+   axis.title.y =element_blank(),text=element_text(family="Times",size=8))
+   
+Erica<-    
+ggplot(Pik_Erica, aes(x=Age, y=value, fill=variable)) +
+    theme_classic()+                  
+    geom_area()+
+    scale_fill_manual(values=c("#894889"))+ 
+    scale_x_reverse(breaks =seq(0,100000,1000))+
+    labs(x ="Age (yrs cal BP)", y = "%")+
+   theme(axis.text.x = element_blank(),axis.title.x =element_blank(),
+   axis.title.y =element_blank(),text=element_text(family="Times",size=8))
+
+Poace<-    
+ggplot(Pik_Poace, aes(x=Age, y=value, fill=variable)) +
+    theme_classic()+                 
+    geom_area()+
+    scale_fill_manual(values=c("#fda642"))+ 
+    scale_x_reverse(breaks =seq(0,100000,1000))+
+    labs(x ="Age (yrs cal BP)", y = "%")+
+   theme(axis.text.x = element_blank(),axis.title.x =element_blank(),
+   axis.title.y =element_blank(),text=element_text(family="Times",size=8)) 
+   
+Artem<-    
+ggplot(Pik_Artem, aes(x=Age, y=value, fill=variable)) +
+    theme_classic()+                 
+    geom_area()+
+    scale_fill_manual(values=c("#fda642"))+ 
+    scale_x_reverse(breaks =seq(0,100000,1000))+
+    labs(x ="Age (yrs cal BP)", y = "%")+
+   theme(axis.text.x = element_blank(),axis.title.x =element_blank(),
+   axis.title.y =element_blank(),text=element_text(family="Times",size=8)) 
+   
+Cypera<-    
+ggplot(Pik_Cypera, aes(x=Age, y=value, fill=variable)) +
+    theme_classic()+                 
+    geom_area()+
+    scale_fill_manual(values=c("#fda642"))+ 
+    scale_x_reverse(breaks =seq(0,100000,1000))+
+    labs(x ="Age (yrs cal BP)", y = "%")+
+   theme(axis.text.x = element_blank(),axis.title.x =element_blank(),
+   axis.title.y =element_blank(),text=element_text(family="Times",size=8)) 
+   
+Sphagn<-
+ggplot(Pik_Sphagn, aes(x=Age, y=value, fill=variable)) +
+    theme_classic()+                 
+    geom_area()+
+    scale_fill_manual(values=c("#6699ff"))+ 
+    scale_x_reverse(breaks =seq(0,100000,1000))+
+    labs(x ="Age (yrs cal BP)", y = "%")+
+   theme(axis.text.x = element_blank(),axis.title.x =element_blank(),
+   axis.title.y =element_blank(),text=element_text(family="Times",size=8)) 
+
+Pikku_RoC<-read.csv("Vegetation_histories/Pikku_count.csv", header=TRUE, sep=";")
+Pikku_RoC$sample.id<-as.character(Pikku_RoC$sample.id)
+sequence_Pik <- 
+  fc_estimate_RoC(
+    data_source_community = Pikku_RoC[,-c(2:3)],
+    data_source_age = Pikku_RoC[,c(1:3)],
+    age_uncertainty = FALSE,
+    smooth_method = "age.w",
+    Working_Units = "levels",
+    tranform_to_proportions = TRUE,
+    rand = 1000,
+    treads = TRUE,
+    DC = "chisq")
+Pikku_RoC<-data.frame(sequence_Pik)
+
+ROC_plot<-
+ggplot(Pikku_RoC,aes(x=Age,y=ROC))+
+   theme_classic()+
+   scale_x_reverse(breaks =seq(0,100000,1000),limits=c(max(Pik_Sphagn$Age),min(Pik_Sphagn$Age)))+
+   scale_y_continuous(limits=c(0,0.4))+
+   geom_area()+
+   labs(tx="Age (yrs cal BP)",y="ROC") +
+   theme(axis.text.x = element_blank(),axis.title.x =element_blank(),
+   axis.title.y =element_blank(),text=element_text(family="Times",size=8))   
+
+Pikku_AccRate<-read.csv("Vegetation_histories/Pikku_accumRate.csv",header=TRUE, row.names=1, sep=";", check.names=FALSE)
+Pik_Tree<-Pikku_AccRate[,c(1:5)]
+Pik_Tree<-cbind(Pik_Tree[,1],apply(Pik_Tree[,c(2:5)],1,sum))
+colnames(Pik_Tree)<-c("Age","Tree") 
+Pik_Tree<-as.data.frame(Pik_Tree) 
+
+AccRate_plot<-
+ggplot(Pik_Tree,aes(x=Age,y=Tree))+
+   theme_classic()+
+   scale_x_reverse(breaks =seq(0,100000,1000),limits=c(max(Pik_Sphagn$Age),min(Pik_Sphagn$Age)))+
+   scale_y_continuous(limits=c(0,60000))+
+   geom_area()+
+   labs(tx="Age (yrs cal BP)",y="PAR") +
+   theme(axis.text.x = element_blank(),axis.title.x =element_blank(),
+   axis.title.y =element_blank(),text=element_text(family="Times",size=8)) 
+  
+prow <- plot_grid(Betula + theme(legend.position="none"),
+                  Pinus + theme(legend.position="none"),
+                  Picea + theme(legend.position="none"),
+                  Alnus + theme(legend.position="none"),
+                  Erica + theme(legend.position="none"),
+                  Junip + theme(legend.position="none"),
+                  Salix + theme(legend.position="none"),
+                  Poace + theme(legend.position="none"),
+                  Cypera + theme(legend.position="none"),
+                  Artem + theme(legend.position="none"),
+                  Sphagn + theme(legend.position="none"),
+                  ROC_plot + theme(legend.position="none"),
+                  AccRate_plot + theme(legend.position="none"),    
+           align = 'v',
+           labels = c("Betula","Pinus","Picea","Alnus","Erica","Junip","Salix","Poace","Cypera","Artem","Sphagn","RoC","PAR"),
+           hjust = -1,
+           nrow = 13,
+           label_size = 13)  
+
+Pikku_diagram <- plot_grid( prow, rel_widths = c(3, .3))
+Pikku_diagram  
+```

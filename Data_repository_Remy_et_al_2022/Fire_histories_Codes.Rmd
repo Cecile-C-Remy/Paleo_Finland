@@ -1,0 +1,298 @@
+---
+title: "Fire_histories"
+author: "Cecile C. Remy"
+date: "April 2, 2022"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+These codes produce the results of figure 2 and several outputs required to produce the figure 4.
+The files used are located in the folder named "Fire_histories" and contain the charcoal count interpolated from the age-depth models (named Count_Rosalia.csv, Count_Pikku.csv and Count_Charly.csv), the dates of the fire events (named Fire_events.csv) extracted from the CharAnalysis outputs, and a metadata file required to run some functions from the paleofire package. The chironomid-inferred July Temperature are not presented here as the data have already been published (see the main manuscript for references).
+The produced outputs required for the figure 4 are the Biomass Burned at each site (BBRosalia, BBPikku) and averaged from the three sites (BB_Reg), the Fire Frequency at each site and averaged from the three sites (FF_Reg, which contains the data by site), and the Fire Size Index at each site and averaged from the three sites (FS_Reg, which contains the data by site). 
+
+```{r }
+#install.packages("devtools") #if not already installed
+require("devtools")
+#devtools::install_github("paleofire/paleofire") #if not already installed
+library("paleofire")
+library(ggplot2)
+windowsFonts(Times=windowsFont("Times New Roman"))
+```
+
+## **Biomass burned reconstruction**
+```{r}
+dirs<-c('Fire_histories/')
+Files<-list.files(dirs)
+```
+# *Charly*
+```{r,results='hide'}
+Counts=c("Fire_histories/Count_Charly.csv","Fire_histories/Count_Charly.csv","Fire_histories/Count_Charly.csv")
+metadata=c("Fire_histories/metadata.csv")
+mydata=pfAddData(files = Counts, metadata = metadata, type="CharAnalysis", sep = ";", dec = ".")
+TR1=pfTransform(add=mydata, method=c("MinMax","Box-Cox","Z-Score"))
+COMP2=pfCompositeLF(TR1, tarAge=seq(-70,7660,10), hw=500, nboot=100,  binhw=0.5)
+```
+```{r}
+plot(COMP2,ylim=c(-2,2),main=c("Biomass burned - Charly"))
+BBCharly<-as.data.frame(COMP2$Result[,1:5])
+```
+# *Pikku*
+```{r,results='hide'}
+Counts=c("Fire_histories/Count_Pikku.csv","Fire_histories/Count_Pikku.csv","Fire_histories/Count_Pikku.csv")
+metadata=c("Fire_histories/metadata.csv")
+mydata=pfAddData(files = Counts, metadata = metadata, type="CharAnalysis", sep = ";", dec = ".")
+TR1=pfTransform(add=mydata, method=c("MinMax","Box-Cox","Z-Score"))
+COMP2=pfCompositeLF(TR1, tarAge=seq(-70,9480,10), hw=500, nboot=100,  binhw=0.5)
+```
+```{r}
+plot(COMP2,ylim=c(-2,2),main=c("Biomass burned - Pikku"))
+BBPikku<-as.data.frame(COMP2$Result[,1:5])
+#The output BBPikku is available as file "BBPikku.csv" in the folder "Fire_histories"
+```
+# *Rosalia*
+```{r,results='hide'}
+Counts=c("Fire_histories/Count_Rosalia.csv","Fire_histories/Count_Rosalia.csv","Fire_histories/Count_Rosalia.csv")
+metadata=c("Fire_histories/metadata.csv")
+mydata=pfAddData(files = Counts, metadata = metadata, type="CharAnalysis", sep = ";", dec = ".")
+TR1=pfTransform(add=mydata, method=c("MinMax","Box-Cox","Z-Score"))
+COMP2=pfCompositeLF(TR1, tarAge=seq(-70,11100,10), hw=500, nboot=100,  binhw=0.5)
+```
+```{r}
+plot(COMP2,ylim=c(-2,2),main=c("Biomass burned - Rosalia"))
+BBRosalia<-as.data.frame(COMP2$Result[,1:5])
+#The output BBRosalia is available as file "BBRosalia.csv" in the folder "Fire_histories"
+```
+# *Regional*
+```{r }
+BB_Charly<-BBCharly[,c(1,3)]
+BB_Pikku<-BBPikku[,c(1,3)]
+BB_Rosalia<-BBRosalia[,c(1,3)]
+colnames(BB_Charly)<-c("Age","MeanCharly")
+colnames(BB_Pikku)<-c("Age","MeanPikku")
+colnames(BB_Rosalia)<-c("Age","MeanRosalia")
+
+BB_Reg<-merge(BB_Rosalia,BB_Pikku,by=c("Age"),all.x = TRUE)
+BB_Reg<-merge(BB_Reg,BB_Charly,by=c("Age"),all.x = TRUE)
+BB_Reg[,5]<-apply(BB_Reg[,2:4],1,mean,na.rm=T)
+colnames(BB_Reg)<-c("AGE","MEAN.of_boot.")
+#The output BB_reg is available as file "BB_Reg.csv" in the folder "Fire_histories"
+
+
+for (i in 1:nrow(BB_Reg)){
+BB_Reg[i,6]<-quantile(BB_Reg[i,2:4], probs = c(0.05),na.rm=T)
+BB_Reg[i,7]<-quantile(BB_Reg[i,2:4], probs = c(0.95),na.rm=T)
+}
+
+BB_Reg[775:nrow(BB_Reg),5:7]<-NA
+BB_Reg[917:1118,2]<-NA
+BB_Reg[918:1118,3]<-NA
+
+colnames(BB_Reg)<-c("Age","Rosalia","Pikku","Charly","Mean","Low","High")
+BB_Reg<-as.data.frame(BB_Reg)
+BB_Reg$Age<-as.numeric(BB_Reg$Age)
+
+RegBB_plot<-
+ggplot(data=BB_Reg,aes(x=Age,y=Mean))+
+   theme_bw()+
+   scale_x_reverse(limits = c(11000,0), breaks = seq(0,11000,1000))+
+   geom_line(aes(x=Age,y=Charly),color="darkorchid4",linetype = "dotted")+  
+   geom_line(aes(x=Age,y=Pikku),color="lightseagreen",linetype = "dotted")+
+   geom_line(aes(x=Age,y=Rosalia),color="gold3",linetype = "dotted")+
+   geom_line(size=1)+
+   labs(x="Age (cal. yr BP)",y="Individual BB and RegBB (no unit)") +
+   theme(text=element_text(family="Times",size=10))
+RegBB_plot
+```
+
+## **Fire frequency reconstruction**
+```{r}
+dirs<-c('Fire_histories/')
+Files<-list.files(dirs)
+Lakesfires<-read.csv("Fire_histories/Fire_events.csv",h=T,sep=";")
+```
+# *Charly*
+```{r}
+Charlyfires<-Lakesfires[,3]
+Charlyfires<-Charlyfires[!is.na(Charlyfires)]
+fevent=c(Charlyfires)
+ffCharly=kdffreq(fevent,up=-64,lo=7657,bandwidth = 500, nbboot=10,pseudo=FALSE)
+mat_ffCharly<-matrix(cbind(ffCharly$age,ffCharly$ff),ncol=2)
+plot.kdffreq(ffCharly,ylim=c(0,0.01),xlim=c(7700,-60),bty="n")
+colnames(mat_ffCharly)=c("Age","ff")
+mat_ffCharly<-approx(mat_ffCharly[,1],mat_ffCharly[,2],method="linear",xout=seq(-70,11100,by=10))
+```
+# *Pikku*
+```{r}
+Pikkufires<-Lakesfires[,2]
+Pikkufires<-Pikkufires[!is.na(Pikkufires)]
+fevent=c(Pikkufires)
+ffPikku=kdffreq(fevent,up=-64,lo=9479,bandwidth = 500, nbboot=10,pseudo=FALSE)
+mat_ffPikku<-matrix(cbind(ffPikku$age,ffPikku$ff),ncol=2)
+plot.kdffreq(ffPikku,ylim=c(0,0.01),xlim=c(9500,-60),bty="n")
+colnames(mat_ffPikku)=c("Age","ff")
+mat_ffPikku<-approx(mat_ffPikku[,1],mat_ffPikku[,2],method="linear",xout=seq(-70,11100,by=10))
+```
+# *Rosalia*
+```{r}
+Rosaliafires<-Lakesfires[,1]
+Rosaliafires<-Rosaliafires[!is.na(Rosaliafires)]
+fevent=c(Rosaliafires)
+ffRosalia=kdffreq(fevent,up=-64,lo=11096,bandwidth = 500, nbboot=10,pseudo=FALSE)
+mat_ffRosalia<-matrix(cbind(ffRosalia$age,ffRosalia$ff),ncol=2)
+plot.kdffreq(ffRosalia,ylim=c(0,0.01),xlim=c(11100,-60),bty="n")
+colnames(mat_ffRosalia)=c("Age","ff")
+mat_ffRosalia<-approx(mat_ffRosalia[,1],mat_ffRosalia[,2],method="linear",xout=seq(-70,11100,by=10))
+```
+# *Regional*
+```{r}
+FF<-cbind(mat_ffRosalia$x,mat_ffPikku$y,mat_ffCharly$y,mat_ffRosalia$y)
+FF<-data.frame(FF)
+
+FF[,5]<-apply(FF[,2:4],1,mean,na.rm=F)
+colnames(FF)=c("Age","FFPikku","FFCharly","FFRosalia","FFmean")
+FF$Age<-as.numeric(FF$Age)
+Reg_FF<-FF
+#The output Reg_FF is available as file "FF_Reg.csv" in the folder "Fire_histories"
+
+for (i in 1:nrow(FF)){
+FF[i,6]<-quantile(FF[i,2:4], probs = c(0.05),na.rm=T)
+FF[i,7]<-quantile(FF[i,2:4], probs = c(0.95),na.rm=T)
+}
+FF[8:10,5:7]<-NA
+FF[764:nrow(FF),5:7]<-NA
+colnames(FF)<-c("Age","Pikku","Charly","Rosalia","Mean","Low","High")
+FF[917:1118,2]<-NA
+FF[918:1118,4]<-NA
+
+RegFF_plot<-
+ggplot(data=FF,aes(x=Age,y=Mean))+
+   theme_bw()+
+   scale_x_reverse(limits = c(11000,0), breaks = seq(0,11000,1000))+
+   geom_line(aes(x=Age,y=Charly),color="darkorchid4",linetype = "dotted")+
+   geom_line(aes(x=Age,y=Pikku),color="lightseagreen",linetype = "dotted")+
+   geom_line(aes(x=Age,y=Rosalia),color="gold3",linetype = "dotted")+
+   geom_line(size=1)+
+   labs(x="Age(cal. yr BP)",y="Individual FF and RegFF (fire year-1)")+
+   theme(text=element_text(family="Times",size=10)) 
+RegFF_plot
+```   
+
+## **Fire size reconstruction**
+# *Rescaling of BB and RegBB*
+```{r}
+RegBB<-data.frame(BB_Reg[,1],BB_Reg[,5])
+colnames(RegBB)<-c("Age","BBmean")
+RegBBmax<-max(RegBB$BBmean,na.rm=T)
+RegBBmin<-min(RegBB$BBmean,na.rm=T)
+
+RegBB[,3]<-c((RegBB[,2]-RegBBmin)/(RegBBmax-RegBBmin))
+colnames(RegBB)<-c("Age","BBmean","RegBBrescale")
+RegBB[,4]<-RegBB$RegBBrescale+1
+colnames(RegBB)<-c("Age","BBmean","RegBBrescale","RegBBb")
+
+RegBB_Charly<-data.frame(BBCharly$AGE,BBCharly[,3])
+colnames(RegBB_Charly)<-c("Age","BBmean")
+RegBB_Charly[,3]<-c((RegBB_Charly[,2]-RegBBmin)/(RegBBmax-RegBBmin))
+colnames(RegBB_Charly)<-c("Age","BBmean","RegBBrescale")
+RegBB_Charly[,4]<-RegBB_Charly$RegBBrescale+1
+colnames(RegBB_Charly)<-c("Age","BBmean","RegBBrescale","RegBBb")
+
+RegBB_Pikku<-data.frame(BBPikku$AGE,BBPikku[,3])
+colnames(RegBB_Pikku)<-c("Age","BBmean")
+RegBB_Pikku[,3]<-c((RegBB_Pikku[,2]-RegBBmin)/(RegBBmax-RegBBmin))
+colnames(RegBB_Pikku)<-c("Age","BBmean","RegBBrescale")
+RegBB_Pikku[,4]<-RegBB_Pikku$RegBBrescale+1
+colnames(RegBB_Pikku)<-c("Age","BBmean","RegBBrescale","RegBBb")
+
+RegBB_Rosalia<-data.frame(BBRosalia$AGE,BBRosalia[,3])
+colnames(RegBB_Rosalia)<-c("Age","BBmean")
+RegBB_Rosalia[,3]<-c((RegBB_Rosalia[,2]-RegBBmin)/(RegBBmax-RegBBmin))
+colnames(RegBB_Rosalia)<-c("Age","BBmean","RegBBrescale")
+RegBB_Rosalia[,4]<-RegBB_Rosalia$RegBBrescale+1
+colnames(RegBB_Rosalia)<-c("Age","BBmean","RegBBrescale","RegBBb")
+```  
+# *Rescaling of FF and RegFF*
+```{r}
+RegFF<-data.frame(Reg_FF$Age,Reg_FF$FFmean)
+colnames(RegFF)<-c("Age","FFmean")                
+RegFFmax<-max(RegFF$FFmean,na.rm=T)
+RegFFmin<-min(RegFF$FFmean,na.rm=T)
+RegFF[,3]<-c((RegFF[,2]-RegFFmin)/(RegFFmax-RegFFmin))
+colnames(RegFF)<-c("Age","FFmean","RegFFrescale")
+RegFF[,4]<-RegFF$RegFFrescale+1
+colnames(RegFF)<-c("Age","FFmean","RegFFrescale","RegFFb")
+
+RegFF_Charly<-data.frame(Reg_FF$Age,Reg_FF$FFCharly)
+colnames(RegFF_Charly)<-c("Age","BBmean")
+RegFF_Charly[,3]<-c((RegFF_Charly[,2]-RegFFmin)/(RegFFmax-RegFFmin))
+colnames(RegFF_Charly)<-c("Age","BBmean","RegFFrescale")
+RegFF_Charly[,4]<-RegFF_Charly$RegFFrescale+1
+colnames(RegFF_Charly)<-c("Age","BBmean","RegFFrescale","RegFFb")
+
+RegFF_Pikku<-data.frame(Reg_FF$Age,Reg_FF$FFPikku)
+colnames(RegFF_Pikku)<-c("Age","BBmean")
+RegFF_Pikku[,3]<-c((RegFF_Pikku[,2]-RegFFmin)/(RegFFmax-RegFFmin))
+colnames(RegFF_Pikku)<-c("Age","BBmean","RegFFrescale")
+RegFF_Pikku[,4]<-RegFF_Pikku$RegFFrescale+1
+colnames(RegFF_Pikku)<-c("Age","BBmean","RegFFrescale","RegFFb")
+
+RegFF_Rosalia<-data.frame(Reg_FF$Age,Reg_FF$FFRosalia)
+colnames(RegFF_Rosalia)<-c("Age","BBmean")
+RegFF_Rosalia[,3]<-c((RegFF_Rosalia[,2]-RegFFmin)/(RegFFmax-RegFFmin))
+colnames(RegFF_Rosalia)<-c("Age","BBmean","RegFFrescale")
+RegFF_Rosalia[,4]<-RegFF_Rosalia$RegFFrescale+1
+colnames(RegFF_Rosalia)<-c("Age","BBmean","RegFFrescale","RegFFb")
+``` 
+# *FS index calculation*
+```{r}
+FS<-merge(RegBB,RegFF,by="Age",all=T)
+FS[,8]<-(FS$RegBBb/FS$RegFFb)  
+FSspline<-FS[,c(1,8)]
+
+FS_Charly<-merge(RegBB_Charly,RegFF_Charly,by="Age",all=T)
+FS_Charly[,8]<-(FS_Charly$RegBBb/FS_Charly$RegFFb)  
+FSspline_Charly<-FS_Charly[,c(1,8)]
+
+FS_Pikku<-merge(RegBB_Pikku,RegFF_Pikku,by="Age",all=T)
+FS_Pikku[,8]<-(FS_Pikku$RegBBb/FS_Pikku$RegFFb)  
+FSspline_Pikku<-FS_Pikku[,c(1,8)]
+
+FS_Rosalia<-merge(RegBB_Rosalia,RegFF_Rosalia,by="Age",all=T)
+FS_Rosalia[,8]<-(FS_Rosalia$RegBBb/FS_Rosalia$RegFFb)  
+FSspline_Rosalia<-FS_Rosalia[,c(1,8)]
+
+FSspline<-merge(FSspline_Charly,FSspline_Rosalia,by=c("Age"),all=T)
+FSspline<-merge(FSspline,FSspline_Pikku,by=c("Age"),all=T)
+FS<-cbind(FSspline[,1],apply(FSspline[,2:4],1,mean,na.rm=F),FSspline[,2:4])
+
+colnames(FS)<-c("Age","FSindex","FS_Charly","FS_Rosalia","FS_Pikku")
+#The output FS is available as file "FS_Reg.csv" in the folder "Fire_histories"
+
+FS$Age<-as.numeric(FS$Age)
+
+for (i in 1:nrow(FS)){
+FS[i,6]<-quantile(FS[i,3:5], probs = c(0.05),na.rm=T)
+FS[i,7]<-quantile(FS[i,3:5], probs = c(0.95),na.rm=T)
+}
+FS[,2]<-apply(FS[,3:5],1,mean)
+FS[c(1:21,765:nrow(FS)),c(2,6,7)]<-NA
+
+colnames(FS)<-c("Age","Mean","Charly","Rosalia","Pikku","Low","High")  
+FS[917:1118,2]<-NA
+FS[918:1118,4]<-NA
+
+FS_plot<-
+ggplot(data=FS,aes(x=Age,y=Mean))+
+   theme_bw()+
+   scale_x_reverse(limits = c(11000,0), breaks = seq(0,11000,1000))+
+   geom_line(aes(x=Age,y=Charly),color="darkorchid4",linetype = "dotted")+
+   geom_line(aes(x=Age,y=Pikku),color="lightseagreen",linetype = "dotted")+
+   geom_line(aes(x=Age,y=Rosalia),color="gold3",linetype = "dotted")+
+   geom_line(size=1)+
+   ylim(0, 3)+
+   labs(x="Age(yrs cal. BP)",y="Individual FS and RegFS index (no unit)")+
+   theme(text=element_text(family="Times",size=10)) 
+FS_plot
+
+``` 

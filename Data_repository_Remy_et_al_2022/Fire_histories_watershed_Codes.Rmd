@@ -1,0 +1,301 @@
+---
+title: "Fire_histories_watershed"
+author: "Cecile C. Remy"
+date: "April 2, 2022"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+These codes produce the results of figure 4.
+The files used are located in the folder named "Fire_histories" and contain the charcoal data: charcoal count interpolated from the age-depth models (named Count_Rosalia.csv and Count_Pikku.csv), the dates of the fire events (named Fire_events.csv) extracted from the CharAnalysis outputs, the individual charcoal measurements (Pikku_individual_charcoal.csv and Rosalia_individual_charcoal.csv) the outputs from the script named "Fire histories" which are the Biomass Burned at each site (BBRosalia.csv, BBPikku.csv) and averaged from the three sites (BB_Reg.csv), the Fire Frequency at each site and averaged from the three sites (FF_Reg.csv, which contains the data by site), and the Fire Size Index at each site and averaged from the three sites (FS_Reg.csv, which contains the data by site).
+
+```{r }
+#install.packages("ggplot2") #if not already installed
+library("ggplot2")
+windowsFonts(Times=windowsFont("Times New Roman"))
+#install.packages("scales") #if not already installed
+library("scales")
+```
+
+```{r}
+dirs<-c('Fire_histories/')
+Files<-list.files(dirs)
+```
+## **Rosalia**
+# *Biomass burned*
+```{r }
+Char_Ros<-read.csv("Fire_histories/Count_Rosalia.csv",h=T,sep=";")[,c(3,4,6)]
+colnames(Char_Ros)<-c("AgeTop","AgeBot","Count")
+
+DF<-c()
+for (i in 1:nrow(Char_Ros)){
+Age<-seq(Char_Ros[i,1],Char_Ros[i,2],0.5)
+CBind<-cbind(Age[1:c(length(Age)-1)],rep(Char_Ros[i,3],c(length(Age)-1)))
+DF<-rbind(DF,CBind)
+}
+colnames(DF)<-c("Age","Count")
+
+BB<-read.csv("Fire_histories/BB_Reg.csv",h=T,sep=",")
+BB_Rosalia<-read.csv("Fire_histories/BBRosalia.csv",h=T,sep=",")[,c(1,2)]
+colnames(BB_Rosalia)<-c("Age","MeanR")
+BB_Rosalia$Age<-as.numeric(BB_Rosalia$Age)
+BB_Rosalia[917:1118,2]<-NA
+
+Ros_BBChar<-merge(DF,BB_Rosalia,by="Age")
+Ros_BBChar<-na.omit(Ros_BBChar)
+
+colnames(Ros_BBChar)<-c("Age","Count","Mean")
+Ros_BBChar[,3]<-rescale(Ros_BBChar[,3], to=c(min(Ros_BBChar$Count),max(Ros_BBChar$Count)))
+Ros_BBChar<-as.data.frame(Ros_BBChar)
+Ros_BBChar$Age<-as.numeric(Ros_BBChar$Age)
+mean(Ros_BBChar$Mean)
+
+BBRosalia_plot<-
+ggplot(data=Ros_BBChar,aes(x=Age))+
+theme_classic()+ 
+   scale_x_reverse(breaks =seq(0,100000,1000),limits=c(9052.5,32.5))+
+   geom_line(aes(x=Age,y=Mean),size=1,color="red4")+
+   geom_bar(aes(x=Age,y=Count),stat="identity", na.rm = TRUE)+
+   geom_hline(yintercept=mean(Ros_BBChar$Mean),linetype="dashed")+
+   labs(title="Biomass Burned and Charcoal Count - Rosalia",x="Age(yrs cal. BP)",y="RegBB (no unit)") +
+   scale_y_continuous(name = "BB (no unit)",sec.axis = sec_axis(trans=~., name="Charcoal count (#)"))+
+   theme(text=element_text(family="Times",size=12)) 
+BBRosalia_plot
+```
+
+# *Fire Frequency*
+```{r }
+FF<-read.csv("Fire_histories/FF_Reg.csv",h=T,sep=",")
+FF$Age<-as.numeric(FF$Age)
+FF[916:1118,4]<-NA
+colnames(FF)<-c("Age","Pikku","Charly","Rosalia","Mean")
+Events<-read.csv("Fire_histories/Fire_events.csv",h=T,sep=";") 
+mean(FF$Rosalia,na.rm=T)
+
+FFRosalia_plot<-
+ggplot(data=FF,aes(x=Age,y=Rosalia))+
+    theme_classic()+ 
+   scale_x_reverse(breaks =seq(0,100000,1000),limits=c(9052.5,32.5))+
+   geom_hline(yintercept=mean(FF$Rosalia,na.rm=T),linetype="dashed")+
+   scale_y_continuous(limits=c(0.0015,0.0056))+
+   geom_line(size=1,color="red4")+
+   annotate("point", x = Events[1:39,1], y = rep(0.0055,39), colour = "black")+
+   labs(x="Age(yrs cal. BP)",y="FF (fire year-1)",title="Fire frequency - Rosalia")+
+   theme(text=element_text(family="Times",size=12)) 
+FFRosalia_plot
+```
+
+# *Fire Size*
+```{r }
+FS<-read.csv("Fire_histories/FS_Reg.csv",h=T,sep=",")
+FS$Age<-as.numeric(FS$Age)
+
+colnames(FS)<-c("Age","Mean","Charly","Rosalia","Pikku")  
+FS[c(1:21,916:nrow(FS)),c(2:5)]<-NA
+mean(FS$Rosalia,na.rm=T)
+mean(FS$Pikku,na.rm=T)
+
+FSRosalia_plot<-
+ggplot(data=FS,aes(x=Age,y=Rosalia))+
+   theme_classic()+ 
+   scale_x_reverse(breaks =seq(0,100000,1000),limits=c(9052.5,32.5))+
+   geom_hline(yintercept=mean(FS$Rosalia,na.rm=T),linetype="dashed")+   
+   scale_y_continuous(limits=c(0.5,5))+
+   geom_line(size=1,color="red4")+
+   labs(x="Age(yrs cal. BP)",y="FS index (no unit)",title="FS index - Rosalia")+
+   theme(text=element_text(family="Times",size=12)) 
+FSRosalia_plot
+```   
+
+# *Charcoal area*
+```{r } 
+Ros<-read.csv("Fire_histories/Rosalia_individual_charcoal.csv",head=T,sep=";")
+Ros_BB<-read.csv("Fire_histories/Count_Rosalia.csv",head=T,sep=";")
+colnames(Ros_BB)[1]<-"SampleId"
+Ros_BB<-Ros_BB[,c(1,3)]
+Ros_T<-merge(Ros,Ros_BB,by="SampleId")
+colnames(Ros_T)[24]<-"Age"
+Ros_T<-Ros_T[,c(24,4)]
+Ros_T<-data.frame(Ros_T)
+colnames(Ros_T)<-c("Age","MeanArea")
+
+AreaRosalia_plot<-
+ggplot(Ros_T,aes(x=Age,y=MeanArea))+
+   theme_classic()+ 
+   scale_x_reverse(breaks =seq(0,100000,1000),limits=c(9052.5,32.5))+
+   scale_y_log10("y",limits = c(0.01,1e0))+           
+   geom_point(aes(x=Age,y=MeanArea),colour="grey40",size=0.8)+
+   geom_smooth(span=0.1,color="red4",size=1)+
+   geom_hline(yintercept=mean(Ros_T$MeanArea,na.rm=T),linetype="dashed")+ 
+   labs(x="Age(yrs cal. BP)",y="Charcoal area (log10 mm2)",title="Charcoal Area - Rosalia")+
+   theme(text=element_text(family="Times",size=12)) 
+AreaRosalia_plot
+```   
+
+# *Charcoal aspect*
+```{r }
+Ros<-read.csv("Fire_histories/Rosalia_individual_charcoal.csv",head=T,sep=";")
+Ros_BB<-read.csv("Fire_histories/Count_Rosalia.csv",head=T,sep=";")
+colnames(Ros_BB)[1]<-"SampleId"
+Ros_BB<-Ros_BB[,c(1,3)]
+Ros_T<-merge(Ros,Ros_BB,by="SampleId")
+colnames(Ros_T)[24]<-"Age"
+Ros_T<-Ros_T[,c(24,5,7)]
+Ros_T<-cbind(Ros_T[,1],Ros_T[,2]/Ros_T[,3])
+Ros_T<-data.frame(Ros_T)
+colnames(Ros_T)<-c("Age","LW")
+
+LWRosalia_plot<-
+ggplot(data=Ros_T,aes(x=Age,y=LW))+
+   theme_classic()+ 
+   scale_x_reverse(breaks =seq(0,100000,1000),limits=c(9052.5,32.5))+
+   scale_y_log10("y",limits = c(1e0,3e1))+
+   geom_point(aes(x=Age,y=LW),colour="grey40",size=0.8)+
+   geom_smooth(span=0.1,color="red4",size=1)+
+   geom_hline(yintercept=c(2.5))+
+   geom_hline(yintercept=c(3.5))+
+   labs(x="Age(yrs cal. BP)",y="Charcoal aspect (log10 L/W ratio)",title="Charcoal aspect - Rosalia") +
+   theme(text=element_text(family="Times",size=12)) 
+LWRosalia_plot
+```  
+
+
+
+## **Pikku**
+# *Biomass burned*
+```{r }
+Char_Pik<-read.csv("Fire_histories/Count_Pikku.csv",h=T,sep=";")[,c(3,4,6)]
+colnames(Char_Pik)<-c("AgeTop","AgeBot","Count")
+
+DF<-c()
+for (i in 1:nrow(Char_Pik)){
+Age<-seq(Char_Pik[i,1],Char_Pik[i,2],0.5)
+CBind<-cbind(Age[1:c(length(Age)-1)],rep(Char_Pik[i,3],c(length(Age)-1)))
+DF<-rbind(DF,CBind)
+}
+colnames(DF)<-c("Age","Count")
+
+BB<-read.csv("Fire_histories/BB_Reg.csv",h=T,sep=",")
+BB_Pikku<-read.csv("Fire_histories/BBPikku.csv",h=T,sep=",")[,c(1,2)]
+colnames(BB_Pikku)<-c("Age","MeanR")
+BB_Pikku$Age<-as.numeric(BB_Pikku$Age)
+BB_Pikku[918:1118,2]<-NA
+
+Pik_BBChar<-merge(DF,BB_Pikku,by="Age")
+Pik_BBChar<-na.omit(Pik_BBChar)
+
+colnames(Pik_BBChar)<-c("Age","Count","Mean")
+Pik_BBChar[,3]<-rescale(Pik_BBChar[,3], to=c(min(Pik_BBChar$Count),max(Pik_BBChar$Count)))
+Pik_BBChar<-as.data.frame(Pik_BBChar)
+Pik_BBChar$Age<-as.numeric(Pik_BBChar$Age)
+
+BBPikku_plot<-
+ggplot(data=Pik_BBChar,aes(x=Age))+
+theme_classic()+ 
+   scale_x_reverse(breaks =seq(0,100000,1000),limits=c(9046,-34))+
+   geom_line(aes(x=Age,y=Mean),size=1,color="red4")+
+   geom_bar(aes(x=Age,y=Count),stat="identity", na.rm = TRUE)+
+   geom_hline(yintercept=mean(Pik_BBChar$Mean),linetype="dashed")+
+   labs(title="Biomass Burned and Charcoal Count - Pikku",x="Age(yrs cal. BP)",y="RegBB (no unit)") +
+   scale_y_continuous(name = "BB (no unit)",sec.axis = sec_axis(trans=~., name="Charcoal count (#)"))+
+   theme(text=element_text(family="Times",size=12)) 
+BBPikku_plot
+```
+
+# *Fire Frequency*
+```{r }
+FF<-read.csv("Fire_histories/FF_Reg.csv",h=T,sep=",")
+FF$Age<-as.numeric(FF$Age)
+FF[916:1118,4]<-NA
+colnames(FF)<-c("Age","Pikku","Charly","Rosalia","Mean")
+Events<-read.csv("Fire_histories/Fire_events.csv",h=T,sep=";") 
+mean(FF$Pikku,na.rm=T)
+
+FFPikku_plot<-
+ggplot(data=FF,aes(x=Age,y=Pikku))+
+    theme_classic()+ 
+   scale_x_reverse(breaks =seq(0,100000,1000),limits=c(9046,-34))+
+   scale_y_continuous(limits=c(0.0015,0.0056))+
+   geom_line(size=1,color="red4")+
+   geom_hline(yintercept=mean(FF$Pikku,na.rm=T),linetype="dashed")+
+   annotate("point", x = Events[1:35,2], y = rep(0.0056,35), colour = "black")+
+   labs(x="Age(yrs cal. BP)",y="FF (fire year-1)",title="Fire frequency - Pikku")+
+   theme(text=element_text(family="Times",size=12)) 
+FFPikku_plot
+```
+
+# *Fire Size*
+```{r }
+FS<-read.csv("Fire_histories/FS_Reg.csv",h=T,sep=",")
+FS$Age<-as.numeric(FS$Age)
+
+colnames(FS)<-c("Age","Mean","Charly","Rosalia","Pikku")  
+FS[c(1:21,916:nrow(FS)),c(2:5)]<-NA
+mean(FS$Rosalia,na.rm=T)
+mean(FS$Pikku,na.rm=T)
+
+FSPikku_plot<-
+ggplot(data=FS,aes(x=Age,y=Pikku))+
+   theme_classic()+ 
+   scale_x_reverse(breaks =seq(0,100000,1000),limits=c(9046,-34))+
+   geom_hline(yintercept=mean(FS$Pikku,na.rm=T),linetype="dashed")+   
+   scale_y_continuous(limits=c(0.5,5))+
+   geom_line(size=1,color="red4")+
+   labs(x="Age(yrs cal. BP)",y="FS index (no unit)",title="FS index - Pikku")+
+   theme(text=element_text(family="Times",size=12)) 
+FSPikku_plot
+```   
+
+# *Charcoal area*
+```{r } 
+Pik<-read.csv("Fire_histories/Pikku_individual_charcoal.csv",head=T,sep=";")
+Pik_BB<-read.csv("Fire_histories/Count_Pikku.csv",head=T,sep=";")
+colnames(Pik_BB)[1]<-"SampleId"
+Pik_BB<-Pik_BB[,c(1,3)]
+Pik_T<-merge(Pik,Pik_BB,by="SampleId")
+colnames(Pik_T)[24]<-"Age"
+Pik_T<-Pik_T[,c(24,4)]
+Pik_T<-data.frame(Pik_T)
+colnames(Pik_T)<-c("Age","MeanArea")
+
+AreaPikku_plot<-
+ggplot(Pik_T,aes(x=Age,y=MeanArea))+
+   theme_classic()+ 
+   scale_x_reverse(breaks =seq(0,100000,1000),limits=c(9046,-34))+
+   scale_y_log10("y",limits = c(0.01,1e0))+           
+   geom_point(aes(x=Age,y=MeanArea),colour="grey40",size=0.8)+
+   geom_smooth(span=0.1,color="red4",size=1)+
+   geom_hline(yintercept=mean(Pik_T$MeanArea,na.rm=T),linetype="dashed")+ 
+   labs(x="Age(yrs cal. BP)",y="Charcoal area (log10 mm2)",title="Charcoal Area - Pikku")+
+   theme(text=element_text(family="Times",size=12)) 
+AreaPikku_plot
+```   
+
+# *Charcoal aspect*
+```{r }
+Pik<-read.csv("Fire_histories/Pikku_individual_charcoal.csv",head=T,sep=";")
+Pik_BB<-read.csv("Fire_histories/Count_Pikku.csv",head=T,sep=";")
+colnames(Pik_BB)[1]<-"SampleId"
+Pik_BB<-Pik_BB[,c(1,3)]
+Pik_T<-merge(Pik,Pik_BB,by="SampleId")
+colnames(Pik_T)[24]<-"Age"
+Pik_T<-Pik_T[,c(24,5,7)]
+Pik_T<-cbind(Pik_T[,1],Pik_T[,2]/Pik_T[,3])
+Pik_T<-data.frame(Pik_T)
+colnames(Pik_T)<-c("Age","LW")
+
+
+LWPikku_plot<-
+ggplot(data=Pik_T,aes(x=Age,y=LW))+
+   theme_classic()+ 
+   scale_x_reverse(breaks =seq(0,100000,1000),limits=c(9046,-34))+
+   scale_y_log10("y",limits = c(1e0,3e1))+
+   geom_point(aes(x=Age,y=LW),colour="grey40",size=0.8)+
+   geom_smooth(span=0.1,color="red4",size=1)+
+   geom_hline(yintercept=c(2.5))+
+   geom_hline(yintercept=c(3.5))+
+   labs(x="Age(yrs cal. BP)",y="Charcoal aspect (log10 L/W ratio)",title="Charcoal aspect - Pikku") +
+   theme(text=element_text(family="Times",size=12)) 
+LWPikku_plot
+``` 

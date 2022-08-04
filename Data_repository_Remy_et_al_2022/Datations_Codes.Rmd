@@ -1,0 +1,73 @@
+---
+title: "Age_Depth Models"
+author: "Cecile C. Remy"
+date: "April 2, 2022"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+These codes produce the results of figure S1.
+The files used are located in the folder named "Datations" and contain the AMS dating for the three sediment cores.
+
+```{r }
+#install.packages("Bchron") #if not already installed
+library("Bchron")
+```
+
+# **Rosalia**
+```{r,results='hide'}
+dirs<-c('Datations/')
+Files<-list.files(dirs)
+
+Rosalia<-read.table(file='Datations/Rosalia_AMS.txt',h=T)
+Rosalia_output = Bchronology(ages=Rosalia$ages,ageSds=Rosalia$ageSds,
+calCurves=Rosalia$calCurves,positions=Rosalia$position,
+positionThicknesses=Rosalia$thickness,ids=Rosalia$id,
+predictPositions=seq(0,143,by=0.5))
+```
+```{r}
+summary(Rosalia_output) # Default is for quantiles of ages at predictPosition values
+summary(Rosalia_output, type='convergence') # Check model convergence
+summary(Rosalia_output, type='outliers') # Look at outlier probabilities
+
+plot(Rosalia_output,xlab='Age (cal years BP)',ylab='Depth (cm)',las=1)
+```
+
+# **Pikku**
+```{r,results='hide'}
+dirs<-c('Datations/')
+Files<-list.files(dirs)
+
+Pikku<-read.table(file='Datations/Pikku_AMS.txt',h=T)
+Pikku_output = Bchronology(ages=Pikku$ages,ageSds=Pikku$ageSds,
+calCurves=Pikku$calCurves,positions=Pikku$position,
+positionThicknesses=Pikku$thickness,ids=Pikku$id,
+predictPositions=seq(0,131,by=0.5))
+```
+```{r}
+summary(Pikku_output) # Default is for quantiles of ages at predictPosition values
+summary(Pikku_output, type='convergence') # Check model convergence
+summary(Pikku_output, type='outliers') # Look at outlier probabilities
+
+plot(Pikku_output,xlab='Age (cal years BP)',ylab='Depth (cm)',las=1)
+```
+
+# **Charly**
+```{r,results='hide'}
+dirs<-c('Datations/')
+Files<-list.files(dirs)
+
+Charly<-read.table(file='Datations/Charly_AMS.txt',h=T)
+Charly_output = Bchronology(ages=Charly$ages,ageSds=Charly$ageSds,
+calCurves=Charly$calCurves,positions=Charly$position,
+positionThicknesses=Charly$thickness,ids=Charly$id,
+predictPositions=seq(0,144,by=0.5))
+```
+```{r}
+summary(Charly_output) # Default is for quantiles of ages at predictPosition values
+summary(Charly_output, type='convergence') # Check model convergence
+summary(Charly_output, type='outliers') # Look at outlier probabilities
+
+plot(Charly_output,xlab='Age (cal years BP)',ylab='Depth (cm)',las=1)
+```

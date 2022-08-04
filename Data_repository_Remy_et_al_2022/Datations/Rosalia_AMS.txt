@@ -1,0 +1,8 @@
+id	ages	ageSds	position	thickness	calCurves
+Top-1	-66	1	0	0	normal
+ULA-7269	2465	15	27.5	1	intcal13
+ULA-7270	3350	15	45.75	1.5	intcal13
+ULA-9709	3935	20	54.5	1	intcal13
+ULA-7271	5840	15	80.75	1.5	intcal13
+ULA-9710	6925	15	109.25	0.5	intcal13
+ULA-7272	9580	25	140.25	1.5	intcal13
